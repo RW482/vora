@@ -1,5 +1,15 @@
 
 export type Route = 'MUM_TO_KOP' | 'KOP_TO_MUM';
+export type UserRole = 'Admin' | 'Staff' | 'Driver';
+
+export interface User {
+  id: string;
+  username: string;
+  password: string;
+  role: UserRole;
+  fullName: string;
+  linkedVehicleNo?: string; // Only for Drivers
+}
 
 export interface Branch {
   id: string;
@@ -28,9 +38,9 @@ export interface Order {
   brokerName: string;
   weight: number;
   remark: string;
-  vehicleAssignedId?: string;
+  vehicleAssignedNo?: string;
   rate: number;
-  branchId: string; // Linked to Branch
+  branchId: string;
   route: Route;
   status: 'Pending' | 'Loaded' | 'Delivered';
   bookingDate: string;
