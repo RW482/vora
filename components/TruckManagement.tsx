@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Truck, Route, STATIONS } from '../types';
-import { Plus, User, Phone, MapPin, Scale, ArrowRightLeft, Truck as TruckIcon } from 'lucide-react';
+import { Plus, User, Phone, MapPin, Scale, Truck as TruckIcon, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 interface TruckManagementProps {
   trucks: Truck[];
@@ -26,7 +26,10 @@ const TruckManagement: React.FC<TruckManagementProps> = ({ trucks, onAddTruck })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAddTruck(newTruck);
+    onAddTruck({
+      ...newTruck,
+      vehicleNo: newTruck.vehicleNo.toUpperCase()
+    });
     setIsModalOpen(false);
     setNewTruck({
       driverName: '',
@@ -41,140 +44,157 @@ const TruckManagement: React.FC<TruckManagementProps> = ({ trucks, onAddTruck })
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm w-full sm:w-auto">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Fleet <span className="text-indigo-600 dark:text-indigo-400">Scheduler</span></h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">Manage daily routes between Mumbai & Kolhapur</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+          <div className="flex bg-white dark:bg-slate-900 p-1.5 rounded-[1.25rem] ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm w-full lg:w-auto">
+            <button
+              onClick={() => setActiveRoute('MUM_TO_KOP')}
+              className={`flex-1 lg:flex-none px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${
+                activeRoute === 'MUM_TO_KOP' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+              }`}
+            >
+              Mumbai → Kolhapur
+            </button>
+            <button
+              onClick={() => setActiveRoute('KOP_TO_MUM')}
+              className={`flex-1 lg:flex-none px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${
+                activeRoute === 'KOP_TO_MUM' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+              }`}
+            >
+              Kolhapur → Mumbai
+            </button>
+          </div>
+          
           <button
-            onClick={() => setActiveRoute('MUM_TO_KOP')}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-              activeRoute === 'MUM_TO_KOP' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-slate-500 hover:bg-slate-50'
-            }`}
+            onClick={() => setIsModalOpen(true)}
+            className="w-full lg:w-auto flex items-center justify-center gap-3 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-700 text-white px-8 py-3.5 rounded-2xl font-bold text-sm shadow-xl transition-all active:scale-95"
           >
-            Mumbai → Kolhapur
-          </button>
-          <button
-            onClick={() => setActiveRoute('KOP_TO_MUM')}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-              activeRoute === 'KOP_TO_MUM' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-slate-500 hover:bg-slate-50'
-            }`}
-          >
-            Kolhapur → Mumbai
+            <Plus size={18} />
+            Register Vehicle
           </button>
         </div>
-        
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-indigo-200 transition-all"
-        >
-          <Plus size={20} />
-          Add Daily Truck
-        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         {filteredTrucks.map(truck => (
-          <div key={truck.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 hover:shadow-md transition-shadow relative overflow-hidden group">
-            <div className={`absolute top-0 right-0 w-1.5 h-full ${truck.status === 'Available' ? 'bg-green-500' : 'bg-amber-500'}`} />
+          <div key={truck.id} className="bg-white dark:bg-slate-900 rounded-[2.5rem] ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm p-8 hover:shadow-2xl dark:hover:ring-indigo-500/50 transition-all group relative overflow-hidden">
+            <div className={`absolute top-0 right-0 w-3 h-full ${truck.status === 'Available' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
             
-            <div className="flex justify-between items-start mb-6">
+            <div className="flex justify-between items-start mb-8">
               <div>
-                <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">{truck.vehicleNo}</p>
-                <h3 className="text-xl font-bold text-slate-800">{truck.driverName}</h3>
+                <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider mb-2">
+                  <TruckIcon size={12} /> {truck.vehicleNo}
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 leading-none">{truck.driverName}</h3>
+                <p className="text-slate-400 dark:text-slate-500 text-xs font-bold mt-2 uppercase tracking-widest flex items-center gap-1">
+                  <Phone size={10} /> {truck.driverMobile}
+                </p>
               </div>
-              <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
-                truck.status === 'Available' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'
+              <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${
+                truck.status === 'Available' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
               }`}>
                 {truck.status}
               </span>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 text-slate-600">
-                <Phone size={18} className="text-slate-400" />
-                <span className="text-sm font-medium">{truck.driverMobile}</span>
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="text-center">
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-1">From</p>
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{truck.fromStation}</p>
+                </div>
+                <ArrowRight className="text-slate-300 dark:text-slate-600" size={20} />
+                <div className="text-center">
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-1">To</p>
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{truck.toStation}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-3 text-slate-600">
-                <MapPin size={18} className="text-slate-400" />
-                <span className="text-sm font-medium">{truck.fromStation} to {truck.toStation}</span>
-              </div>
-              <div className="flex items-center gap-3 text-slate-600">
-                <Scale size={18} className="text-slate-400" />
-                <div className="flex-1">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span>Load Capacity</span>
-                    <span className="font-bold">{truck.weightCapacity}T</span>
-                  </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-indigo-500" 
-                      style={{ width: `${(truck.availableWeight / truck.weightCapacity) * 100}%` }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">{truck.availableWeight}T available</p>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-end">
+                  <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Manifest Capacity</span>
+                  <span className="text-lg font-black text-slate-900 dark:text-slate-100">{truck.weightCapacity}<span className="text-slate-400 text-xs ml-0.5">T</span></span>
+                </div>
+                <div className="h-2.5 bg-white dark:bg-slate-900 rounded-full overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800 p-0.5">
+                  <div 
+                    className="h-full bg-indigo-600 dark:bg-indigo-500 rounded-full transition-all duration-1000" 
+                    style={{ width: `${(truck.availableWeight / truck.weightCapacity) * 100}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-[10px] font-bold text-indigo-600/60 dark:text-indigo-400/60 tracking-widest uppercase">
+                  <span>Available</span>
+                  <span>{truck.availableWeight}T Remaining</span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-50 flex justify-between items-center">
-              <div className="flex -space-x-2">
-                {[1,2,3].map(i => (
-                  <img key={i} src={`https://picsum.photos/32/32?random=${truck.id}${i}`} className="w-8 h-8 rounded-full border-2 border-white" alt="driver" />
-                ))}
-              </div>
-              <button className="text-indigo-600 font-bold text-xs hover:underline uppercase tracking-wide">View History</button>
-            </div>
+            <button className="w-full mt-8 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-[0.2em] group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
+              Manifest Details
+            </button>
           </div>
         ))}
 
         {filteredTrucks.length === 0 && (
-          <div className="col-span-full py-20 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center">
-            <div className="p-4 bg-white rounded-full shadow-sm mb-4">
-              <TruckIcon className="text-slate-300" size={40} />
+          <div className="col-span-full py-24 bg-white dark:bg-slate-900 rounded-[3rem] ring-1 ring-slate-200 dark:ring-slate-800 ring-dashed flex flex-col items-center justify-center text-center px-6">
+            <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center mb-6 text-slate-200 dark:text-slate-700">
+              <TruckIcon size={48} />
             </div>
-            <p className="text-slate-400 font-medium">No trucks active on this route yet.</p>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Fleet Idle</h3>
+            <p className="text-slate-400 dark:text-slate-500 text-sm max-w-xs font-medium">No active transport manifests currently registered for the {activeRoute.replace('_', ' to ')} route.</p>
           </div>
         )}
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="p-8">
-              <h2 className="text-2xl font-bold text-slate-800 mb-6">Register Daily Truck</h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2">
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">Vehicle Number</label>
+        <div className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md z-[60] flex items-center justify-center p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-[3rem] w-full max-w-xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300 border border-transparent dark:border-slate-800">
+            <div className="p-10">
+              <div className="flex justify-between items-center mb-10">
+                <h2 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Register <span className="text-indigo-600 dark:text-indigo-400">Truck</span></h2>
+                <button onClick={() => setIsModalOpen(false)} className="text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">✕</button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Vehicle Plate Number</label>
                     <input 
                       required
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-black"
+                      autoFocus
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-indigo-600 outline-none transition-all text-slate-900 dark:text-slate-100 font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600 uppercase"
                       placeholder="e.g. MH-09-AZ-1234"
                       value={newTruck.vehicleNo}
                       onChange={e => setNewTruck({...newTruck, vehicleNo: e.target.value})}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">Driver Name</label>
+                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Driver Name</label>
                     <input 
                       required
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-black"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-indigo-600 outline-none transition-all text-slate-900 dark:text-slate-100 font-bold"
                       value={newTruck.driverName}
                       onChange={e => setNewTruck({...newTruck, driverName: e.target.value})}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">Mobile No.</label>
+                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Contact Mobile</label>
                     <input 
                       required
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-black"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-indigo-600 outline-none transition-all text-slate-900 dark:text-slate-100 font-bold"
                       value={newTruck.driverMobile}
                       onChange={e => setNewTruck({...newTruck, driverMobile: e.target.value})}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">From Station</label>
+                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">From</label>
                     <select 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-black"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-indigo-600 outline-none transition-all text-slate-900 dark:text-slate-100 font-bold appearance-none"
                       value={newTruck.fromStation}
                       onChange={e => setNewTruck({...newTruck, fromStation: e.target.value})}
                     >
@@ -182,9 +202,9 @@ const TruckManagement: React.FC<TruckManagementProps> = ({ trucks, onAddTruck })
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">To Station</label>
+                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">To</label>
                     <select 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-black"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-indigo-600 outline-none transition-all text-slate-900 dark:text-slate-100 font-bold appearance-none"
                       value={newTruck.toStation}
                       onChange={e => setNewTruck({...newTruck, toStation: e.target.value})}
                     >
@@ -192,19 +212,19 @@ const TruckManagement: React.FC<TruckManagementProps> = ({ trucks, onAddTruck })
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">Weight Capacity (T)</label>
+                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Capacity (Tons)</label>
                     <input 
                       type="number"
                       required
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-black"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-indigo-600 outline-none transition-all text-slate-900 dark:text-slate-100 font-bold"
                       value={newTruck.weightCapacity}
                       onChange={e => setNewTruck({...newTruck, weightCapacity: Number(e.target.value)})}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">Current Route</label>
+                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Route Assignment</label>
                     <select 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-black"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-indigo-600 outline-none transition-all text-slate-900 dark:text-slate-100 font-bold appearance-none"
                       value={newTruck.currentRoute}
                       onChange={e => setNewTruck({...newTruck, currentRoute: e.target.value as Route})}
                     >
@@ -213,19 +233,19 @@ const TruckManagement: React.FC<TruckManagementProps> = ({ trucks, onAddTruck })
                     </select>
                   </div>
                 </div>
-                <div className="flex gap-3 pt-6">
+                <div className="flex gap-4 pt-8">
                   <button 
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 transition-all"
+                    className="flex-1 px-4 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all"
                   >
                     Cancel
                   </button>
                   <button 
                     type="submit"
-                    className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
+                    className="flex-[2] bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 dark:hover:bg-indigo-400 active:scale-95 transition-all"
                   >
-                    Register Truck
+                    Authorize Fleet Entry
                   </button>
                 </div>
               </form>

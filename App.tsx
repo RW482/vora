@@ -11,12 +11,14 @@ import Login from './components/Login';
 import { LayoutGrid, Truck as TruckIcon, ClipboardList, MapPin, Users, LogOut } from 'lucide-react';
 
 const STORAGE_KEY = 'VORA_LOGISTICS_DATA_v2';
+const THEME_KEY = 'VORA_THEME';
 
 const App: React.FC = () => {
   // Authentication State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authError, setAuthError] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Persistence logic
   const [users, setUsers] = useState<User[]>([]);
@@ -26,8 +28,15 @@ const App: React.FC = () => {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const isInitialMount = useRef(true);
 
-  // Initialize Data from LocalStorage or Defaults
+  // Initialize Data & Theme
   useEffect(() => {
+    // Theme initialization
+    const savedTheme = localStorage.getItem(THEME_KEY);
+    if (savedTheme === 'dark') {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
+    }
+
     const savedData = localStorage.getItem(STORAGE_KEY);
     if (savedData) {
       try {
@@ -40,7 +49,6 @@ const App: React.FC = () => {
         console.error("Failed to parse stored data", e);
       }
     } else {
-      // Default initial data if nothing exists
       const defaultUsers: User[] = [
         { id: 'u1', username: 'admin', password: '123', role: 'Admin', fullName: 'System Admin' },
         { id: 'u2', username: 'driver1', password: '123', role: 'Driver', fullName: 'Rahul Shinde', linkedVehicleNo: 'MH-09-CQ-1234' }
@@ -63,7 +71,19 @@ const App: React.FC = () => {
     setIsDataLoaded(true);
   }, []);
 
-  // Sync state to storage - Only after initial load and only when data actually changes
+  const toggleTheme = () => {
+    const nextTheme = !isDarkMode;
+    setIsDarkMode(nextTheme);
+    if (nextTheme) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem(THEME_KEY, 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem(THEME_KEY, 'light');
+    }
+  };
+
+  // Sync state to storage
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
@@ -75,15 +95,12 @@ const App: React.FC = () => {
   }, [users, branches, trucks, orders, isDataLoaded]);
 
   const handleLogin = (un: string, pw: string) => {
-    // Basic trim to avoid whitespace issues
     const cleanUn = un.trim();
     const cleanPw = pw.trim();
-    
     const user = users.find(u => u.username === cleanUn && u.password === cleanPw);
     if (user) {
       setCurrentUser(user);
       setAuthError('');
-      // Set default tab based on role
       setActiveTab(user.role === 'Driver' ? 'orders' : 'dashboard');
     } else {
       setAuthError('Invalid credentials. Check username/password or ensure user is created.');
@@ -132,9 +149,7 @@ const App: React.FC = () => {
     return <Login onLogin={handleLogin} error={authError} />;
   }
 
-  // Define Menu Items based on role
   const isStaff = currentUser.role === 'Admin' || currentUser.role === 'Staff';
-  
   const menuItems = [
     ...(isStaff ? [{ id: 'dashboard', label: 'Dashboard', icon: LayoutGrid }] : []),
     ...(isStaff ? [{ id: 'trucks', label: 'Daily Trucks', icon: TruckIcon }] : []),
@@ -144,23 +159,25 @@ const App: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-slate-50 overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors duration-300">
       <Sidebar 
         items={menuItems} 
         activeItem={activeTab} 
-        onSelect={(id: any) => setActiveTab(id)} 
+        onSelect={(id: any) => setActiveTab(id)}
+        isDarkMode={isDarkMode}
+        toggleTheme={toggleTheme}
       />
       
       <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
         <header className="mb-6 flex justify-between items-center">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-slate-800">
+            <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100">
               {menuItems.find(i => i.id === activeTab)?.label}
             </h1>
-            <div className="flex items-center gap-2 text-slate-500 text-xs md:text-sm">
-              <span>Logged in as <span className="font-bold text-indigo-600">{currentUser.fullName}</span> ({currentUser.role})</span>
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs md:text-sm">
+              <span>Logged in as <span className="font-bold text-indigo-600 dark:text-indigo-400">{currentUser.fullName}</span> ({currentUser.role})</span>
               {currentUser.linkedVehicleNo && (
-                <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md font-bold text-[10px]">
+                <span className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-md font-bold text-[10px]">
                   TRUCK: {currentUser.linkedVehicleNo}
                 </span>
               )}
@@ -168,13 +185,13 @@ const App: React.FC = () => {
           </div>
           <button 
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+            className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
           >
             <LogOut size={16} /> Logout
           </button>
         </header>
 
-        {activeTab === 'dashboard' && <Dashboard trucks={trucks} orders={orders} />}
+        {activeTab === 'dashboard' && <Dashboard trucks={trucks} orders={orders} isDarkMode={isDarkMode} />}
         {activeTab === 'trucks' && <TruckManagement trucks={trucks} onAddTruck={addTruck} />}
         {activeTab === 'orders' && (
           <OrderManagement 
