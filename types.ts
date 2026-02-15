@@ -2,6 +2,7 @@
 export type Route = 'MUM_TO_KOP' | 'KOP_TO_MUM';
 export type UserRole = 'Admin' | 'Staff' | 'Driver';
 export type Language = 'en' | 'mr';
+export type PaymentStatus = 'Paid' | 'Pending' | 'To-Pay';
 
 export interface User {
   id: string;
@@ -41,6 +42,8 @@ export interface Order {
   remark: string;
   vehicleAssignedNo?: string;
   rate: number;
+  totalAmount: number;
+  paymentStatus: PaymentStatus;
   branchId: string;
   route: Route;
   status: 'Pending' | 'Loaded' | 'Delivered';
