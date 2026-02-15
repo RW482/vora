@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
-import { Package, Truck as TruckIcon, TrendingUp, AlertCircle, Calendar } from 'lucide-react';
+import { Package, Truck as TruckIcon, TrendingUp, AlertCircle, Calendar, Info } from 'lucide-react';
 
 interface DashboardProps {
   trucks: Truck[];
@@ -37,6 +37,16 @@ const Dashboard: React.FC<DashboardProps> = ({ trucks, orders, isDarkMode }) => 
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 p-4 rounded-2xl flex items-start gap-4 mb-4">
+        <Info className="text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" size={20} />
+        <div>
+          <p className="text-xs font-bold text-amber-800 dark:text-amber-500 uppercase tracking-widest mb-1">Local Storage Mode</p>
+          <p className="text-xs text-amber-700 dark:text-amber-600 leading-relaxed font-medium">
+            This app saves data to your browser memory. To access this data on another phone or laptop, go to <b>System > Export</b> and then <b>Import</b> the file on the other device.
+          </p>
+        </div>
+      </div>
+
       <div className="flex justify-between items-end mb-2">
         <div>
           <h2 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">System <span className="text-indigo-600 dark:text-indigo-400">Overview</span></h2>
