@@ -7,10 +7,11 @@ export type PaymentStatus = 'Paid' | 'Pending' | 'To-Pay';
 export interface User {
   id: string;
   username: string;
-  password: string;
   role: UserRole;
   fullName: string;
   linkedVehicleNo?: string;
+  themePreference?: 'light' | 'dark';
+  languagePreference?: Language;
 }
 
 export interface Branch {

@@ -10,18 +10,16 @@ import UserManagement from './components/UserManagement';
 import SystemSettings from './components/SystemSettings';
 import Login from './components/Login';
 import { db, auth } from './firebase';
-import { collection, onSnapshot, query, where, doc, getDoc, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, getDoc, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { LayoutGrid, Truck as TruckIcon, ClipboardList, MapPin, Users, LogOut, Settings, CloudRain } from 'lucide-react';
-
-const THEME_KEY = 'VORA_THEME';
-const LANG_KEY = 'VORA_LANG';
+import { LayoutGrid, Truck as TruckIcon, ClipboardList, MapPin, Users, LogOut, Settings, CloudRain, Loader2 } from 'lucide-react';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [language, setLanguage] = useState<Language>((localStorage.getItem(LANG_KEY) as Language) || 'en');
+  const [language, setLanguage] = useState<Language>('en');
   const [isOnline, setIsOnline] = useState(true);
 
   const [users, setUsers] = useState<User[]>([]);
@@ -29,35 +27,50 @@ const App: React.FC = () => {
   const [trucks, setTrucks] = useState<Truck[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
 
-  // 1. Theme and Auth Init
+  // 1. Auth and Initial Profile Sync
   useEffect(() => {
-    const savedTheme = localStorage.getItem(THEME_KEY);
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const shouldShowDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
-    setIsDarkMode(shouldShowDark);
-    if (shouldShowDark) document.documentElement.classList.add('dark');
-
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
-        const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
-        if (userDoc.exists()) {
-          const userData = { id: fbUser.uid, ...userDoc.data() } as User;
-          setCurrentUser(userData);
-          setActiveTab(userData.role === 'Driver' ? 'orders' : 'dashboard');
+        try {
+          const userDocRef = doc(db, 'users', fbUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+            const userData = { id: fbUser.uid, ...userDoc.data() } as User;
+            setCurrentUser(userData);
+            
+            // Apply preferences from Firestore
+            const prefTheme = userData.themePreference || 'light';
+            const prefLang = userData.languagePreference || 'en';
+            
+            setIsDarkMode(prefTheme === 'dark');
+            setLanguage(prefLang);
+            document.documentElement.classList.toggle('dark', prefTheme === 'dark');
+            
+            // Auto-switch to Jobs for Drivers
+            if (userData.role === 'Driver') {
+              setActiveTab('orders');
+            }
+          } else {
+            setCurrentUser(null);
+          }
+        } catch (error) {
+          console.error("Profile sync error:", error);
+          setCurrentUser(null);
         }
       } else {
         setCurrentUser(null);
       }
+      setIsInitialLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // 2. Real-time Listeners (Firestore)
+  // 2. Data Listeners (Unified Pool)
   useEffect(() => {
     if (!currentUser) return;
 
-    // Branches & Users (Admin only usually, but let's keep all for now)
     const unsubBranches = onSnapshot(collection(db, 'branches'), (snap) => {
       setBranches(snap.docs.map(d => ({ id: d.id, ...d.data() } as Branch)));
     });
@@ -70,17 +83,12 @@ const App: React.FC = () => {
       setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() } as User)));
     });
 
-    // Orders - If Driver, only their assigned truck. Else, everything.
-    let ordersQuery = collection(db, 'orders');
-    if (currentUser.role === 'Driver' && currentUser.linkedVehicleNo) {
-       // Note: In production, ensure linkedVehicleNo is stored in Uppercase for consistent queries
-       ordersQuery = query(collection(db, 'orders'), where('vehicleAssignedNo', '==', currentUser.linkedVehicleNo.toUpperCase()));
-    }
-
-    const unsubOrders = onSnapshot(ordersQuery, (snap) => {
+    // Listen to all orders for unified management
+    const unsubOrders = onSnapshot(collection(db, 'orders'), (snap) => {
       setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() } as Order)));
+      setIsOnline(true);
     }, (err) => {
-      console.error("Firestore Listen Error:", err);
+      console.error("Firestore sync error:", err);
       setIsOnline(false);
     });
 
@@ -92,11 +100,30 @@ const App: React.FC = () => {
     };
   }, [currentUser]);
 
-  const toggleTheme = () => {
-    const next = !isDarkMode;
-    setIsDarkMode(next);
-    document.documentElement.classList.toggle('dark', next);
-    localStorage.setItem(THEME_KEY, next ? 'dark' : 'light');
+  if (isInitialLoading) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-950 text-white">
+        <Loader2 className="animate-spin text-indigo-500 mb-4" size={48} />
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] animate-pulse">Initializing Vora Cloud...</p>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return <Login />;
+  }
+
+  const toggleTheme = async () => {
+    const nextTheme = !isDarkMode ? 'dark' : 'light';
+    setIsDarkMode(!isDarkMode);
+    document.documentElement.classList.toggle('dark', !isDarkMode);
+    await updateDoc(doc(db, 'users', currentUser.id), { themePreference: nextTheme });
+  };
+
+  const toggleLanguage = async () => {
+    const nextLang = language === 'en' ? 'mr' : 'en';
+    setLanguage(nextLang);
+    await updateDoc(doc(db, 'users', currentUser.id), { languagePreference: nextLang });
   };
 
   const handleLogout = () => {
@@ -104,34 +131,15 @@ const App: React.FC = () => {
     setCurrentUser(null);
   };
 
-  // Firestore Mutators
-  const addOrder = async (o: Omit<Order, 'id'>) => {
-    await addDoc(collection(db, 'orders'), o);
-  };
-
-  const updateOrderStatus = async (id: string, status: Order['status']) => {
-    await updateDoc(doc(db, 'orders', id), { status });
-  };
-
-  const deleteOrder = async (id: string) => {
-    await deleteDoc(doc(db, 'orders', id));
-  };
-
-  const addTruck = async (t: Omit<Truck, 'id' | 'availableWeight'>) => {
-    await addDoc(collection(db, 'trucks'), { ...t, availableWeight: t.weightCapacity });
-  };
-
-  if (!currentUser) {
-    return <Login />;
-  }
-
   const menuItems = [
     ...(currentUser.role !== 'Driver' ? [{ id: 'dashboard', label: language === 'en' ? 'Dashboard' : 'मुख्य पृष्ठ', icon: LayoutGrid }] : []),
-    ...(currentUser.role !== 'Driver' ? [{ id: 'trucks', label: language === 'en' ? 'Fleet & Manifest' : ' fleet आणि manifest', icon: TruckIcon }] : []),
+    ...(currentUser.role !== 'Driver' ? [{ id: 'trucks', label: language === 'en' ? 'Fleet & Manifest' : 'Fleet आणि Manifest', icon: TruckIcon }] : []),
     { id: 'orders', label: currentUser.role === 'Driver' ? (language === 'en' ? 'My Jobs' : 'माझे काम') : (language === 'en' ? 'Bookings' : 'बुकिंग्स'), icon: ClipboardList },
-    ...(currentUser.role === 'Admin' ? [{ id: 'branches', label: language === 'en' ? 'Branches' : 'शाखा', icon: MapPin }] : []),
-    ...(currentUser.role === 'Admin' ? [{ id: 'users', label: language === 'en' ? 'Users' : 'वापरकर्ते', icon: Users }] : []),
-    ...(currentUser.role === 'Admin' ? [{ id: 'system', label: language === 'en' ? 'System' : 'सिस्टम', icon: Settings }] : []),
+    ...(currentUser.role === 'Admin' ? [
+      { id: 'branches', label: language === 'en' ? 'Branches' : 'शाखा', icon: MapPin },
+      { id: 'users', label: language === 'en' ? 'Users' : 'वापरकर्ते', icon: Users },
+      { id: 'system', label: language === 'en' ? 'System' : 'सिस्टम', icon: Settings },
+    ] : []),
   ];
 
   return (
@@ -139,12 +147,13 @@ const App: React.FC = () => {
       <Sidebar 
         items={menuItems} 
         activeItem={activeTab} 
-        onSelect={(id: any) => setActiveTab(id)} 
+        onSelect={(id) => setActiveTab(id)} 
         isDarkMode={isDarkMode} 
         toggleTheme={toggleTheme} 
         language={language} 
-        toggleLanguage={() => setLanguage(l => l === 'en' ? 'mr' : 'en')} 
+        toggleLanguage={toggleLanguage} 
       />
+      
       <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
         <header className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-4">
@@ -168,18 +177,23 @@ const App: React.FC = () => {
         </header>
 
         {activeTab === 'dashboard' && <Dashboard trucks={trucks} orders={orders} isDarkMode={isDarkMode} />}
-        {activeTab === 'trucks' && <TruckManagement trucks={trucks} orders={orders} onAddTruck={addTruck} />}
+        {activeTab === 'trucks' && <TruckManagement trucks={trucks} orders={orders} onAddTruck={(t) => addDoc(collection(db, 'trucks'), { ...t, availableWeight: t.weightCapacity })} />}
         {activeTab === 'orders' && (
-          <OrderManagement language={language} currentUser={currentUser} orders={orders} trucks={trucks} branches={branches} 
-            onAddOrder={addOrder} 
-            onUpdateStatus={updateOrderStatus} 
-            onDeleteOrder={deleteOrder} 
+          <OrderManagement 
+            language={language} 
+            currentUser={currentUser} 
+            orders={orders} 
+            trucks={trucks} 
+            branches={branches} 
+            onAddOrder={(o) => addDoc(collection(db, 'orders'), o)} 
+            onUpdateStatus={(id, status) => updateDoc(doc(db, 'orders', id), { status })} 
+            onDeleteOrder={(id) => deleteDoc(doc(db, 'orders', id))} 
             hideControls={currentUser.role === 'Driver'} 
           />
         )}
         {activeTab === 'branches' && <BranchManagement branches={branches} onAddBranch={(b) => addDoc(collection(db, 'branches'), b)} />}
         {activeTab === 'users' && <UserManagement users={users} onAddUser={(u) => addDoc(collection(db, 'users'), u)} onDeleteUser={(id) => deleteDoc(doc(db, 'users', id))} />}
-        {activeTab === 'system' && <SystemSettings data={{ users, branches, trucks, orders }} onRestore={() => alert('Feature disabled for Firebase mode')} syncCode="FIREBASE-CLOUD" onSetSyncCode={() => {}} />}
+        {activeTab === 'system' && <SystemSettings data={{ users, branches, trucks, orders }} />}
       </main>
     </div>
   );

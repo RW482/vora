@@ -3,14 +3,14 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-// REPLACE THESE PLACEHOLDERS WITH YOUR ACTUAL FIREBASE CONFIG FROM CONSOLE
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "your-sender-id",
-  appId: "your-app-id"
+  apiKey: "AIzaSyAuai2UnzX_Nifleh5BRyO9u8wqm5m5gkY",
+  authDomain: "vora-transport.firebaseapp.com",
+  projectId: "vora-transport",
+  storageBucket: "vora-transport.firebasestorage.app",
+  messagingSenderId: "518715904501",
+  appId: "1:518715904501:web:188d57017077c3701590bc",
+  measurementId: "G-S3D1JSN46J"
 };
 
 const app = initializeApp(firebaseConfig);
