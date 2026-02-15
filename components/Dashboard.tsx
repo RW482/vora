@@ -42,7 +42,7 @@ const Dashboard: React.FC<DashboardProps> = ({ trucks, orders, isDarkMode }) => 
         <div>
           <p className="text-xs font-bold text-amber-800 dark:text-amber-500 uppercase tracking-widest mb-1">Local Storage Mode</p>
           <p className="text-xs text-amber-700 dark:text-amber-600 leading-relaxed font-medium">
-            This app saves data to your browser memory. To access this data on another phone or laptop, go to <b>System > Export</b> and then <b>Import</b> the file on the other device.
+            This app saves data to your browser memory. To access this data on another phone or laptop, go to <b>System &gt; Export</b> and then <b>Import</b> the file on the other device.
           </p>
         </div>
       </div>
