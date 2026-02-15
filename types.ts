@@ -1,6 +1,7 @@
 
 export type Route = 'MUM_TO_KOP' | 'KOP_TO_MUM';
 export type UserRole = 'Admin' | 'Staff' | 'Driver';
+export type Language = 'en' | 'mr';
 
 export interface User {
   id: string;
@@ -8,7 +9,7 @@ export interface User {
   password: string;
   role: UserRole;
   fullName: string;
-  linkedVehicleNo?: string; // Only for Drivers
+  linkedVehicleNo?: string;
 }
 
 export interface Branch {

@@ -1,5 +1,7 @@
 {
   "name": "VORA TRANSPORT",
   "description": "Premium Logistics Management Portal for the Mumbai-Kolhapur corridor. Professional manifest tracking and fleet optimization.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }
